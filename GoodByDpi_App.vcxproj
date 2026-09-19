@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8C7B46F1-3E45-4879-BD23-E75D84A3B192}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>GoodByDpi_App</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+    <WindowsPackageType>None</WindowsPackageType>
+    <AppxPackage>false</AppxPackage>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <MarkupCompilePass1DependsOn>
+      ResolveReferences;
+      $(MarkupCompilePass1DependsOn)
+    </MarkupCompilePass1DependsOn>
+    <MarkupCompilePass2DependsOn>
+      ResolveReferences;
+      $(MarkupCompilePass2DependsOn)
+    </MarkupCompilePass2DependsOn>
+    <ClCompileDependsOn>
+      ResolveReferences;
+      MarkupCompilePass1;
+      MarkupCompilePass2;
+      $(ClCompileDependsOn)
+    </ClCompileDependsOn>
+  </PropertyGroup>
+  <Target Name="PopulateWinMDReferenceToCompile" BeforeTargets="MarkupCompilePass1;MarkupCompilePass2">
+    <ItemGroup>
+      <WinMDReferenceToCompile Include="@(ReferencePath)" />
+    </ItemGroup>
+  </Target>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PreprocessorDefinitions>_VSDESIGNER_DONT_LOAD_AS_DLL;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Midl>
+      <AdditionalMetadataDirectories>$(WindowsSdkDir)UnionMetadata\$(TargetPlatformVersion);%(AdditionalMetadataDirectories)</AdditionalMetadataDirectories>
+    </Midl>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableUAC>true</EnableUAC>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>_VSDESIGNER_DONT_LOAD_AS_DLL;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 /experimental:deterministic /pathmap:$(ProjectDir)=. /pathmap:$(SolutionDir)=. %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Midl>
+      <AdditionalMetadataDirectories>$(WindowsSdkDir)UnionMetadata\$(TargetPlatformVersion);%(AdditionalMetadataDirectories)</AdditionalMetadataDirectories>
+    </Midl>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableUAC>true</EnableUAC>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalOptions>/Brepro /PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="MainWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="ActionRingButton.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="App.idl">
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="MainWindow.idl">
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="ActionRingButton.idl">
+      <SubType>Code</SubType>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="App.xaml.h">
+      <DependentUpon>App.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="MainWindow.xaml.h">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="ActionRingButton.xaml.h">
+      <DependentUpon>ActionRingButton.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="Services\AutoStartManager.h" />
+    <ClInclude Include="Services\LocalizationService.h" />
+    <ClInclude Include="Services\CrashLogger.h" />
+    <ClInclude Include="Services\DomainResolver.h" />
+    <ClInclude Include="Services\DpiEngine.h" />
+    <ClInclude Include="Services\PingService.h" />
+    <ClInclude Include="Services\TrafficLogger.h" />
+    <ClInclude Include="Services\WhitelistManager.h" />
+    <ClInclude Include="Services\WinDivertDefs.h" />
+    <ClInclude Include="Services\SettingsManager.h" />
+    <ClInclude Include="UI\TrayManager.h" />
+    <ClInclude Include="UI\Components\AnimatedToggle.h" />
+    <ClInclude Include="UI\Components\DropdownMenu.h" />
+    <ClInclude Include="UI\Components\HoverButton.h" />
+    <ClInclude Include="UI\Components\LogCardFactory.h" />
+    <ClInclude Include="UI\Components\WhitelistView.h" />
+    <ClInclude Include="Utils\PathUtils.h" />
+    <ClInclude Include="Utils\StringUtils.h" />
+    <ClInclude Include="Utils\UiUtils.h" />
+    <ClInclude Include="ViewModels\MainViewModel.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="App.xaml.cpp">
+      <DependentUpon>App.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="MainWindow.xaml.cpp">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="ActionRingButton.xaml.cpp">
+      <DependentUpon>ActionRingButton.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="Services\AutoStartManager.cpp" />
+    <ClCompile Include="Services\LocalizationService.cpp" />
+    <ClCompile Include="Services\CrashLogger.cpp" />
+    <ClCompile Include="Services\DomainResolver.cpp" />
+    <ClCompile Include="Services\DpiEngine.cpp" />
+    <ClCompile Include="Services\PingService.cpp" />
+    <ClCompile Include="Services\TrafficLogger.cpp" />
+    <ClCompile Include="Services\WhitelistManager.cpp" />
+    <ClCompile Include="Services\SettingsManager.cpp" />
+    <ClCompile Include="UI\TrayManager.cpp" />
+    <ClCompile Include="UI\Components\AnimatedToggle.cpp" />
+    <ClCompile Include="UI\Components\DropdownMenu.cpp" />
+    <ClCompile Include="UI\Components\HoverButton.cpp" />
+    <ClCompile Include="UI\Components\LogCardFactory.cpp" />
+    <ClCompile Include="UI\Components\WhitelistView.cpp" />
+    <ClCompile Include="Utils\PathUtils.cpp" />
+    <ClCompile Include="Utils\StringUtils.cpp" />
+    <ClCompile Include="ViewModels\MainViewModel.cpp" />
+    <ClCompile Include="$(IntDir)XamlTypeInfo.g.cpp" />
+    <ClCompile Include="$(IntDir)XamlTypeInfo.Impl.g.cpp" />
+    <ClCompile Include="$(IntDir)XamlLibMetadataProvider.g.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GoodByDpi_App.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CppWinRT" Version="2.0.240405.15" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="RunMarkupCompilationBeforeClCompile" BeforeTargets="ClCompile" DependsOnTargets="MarkupCompilePass1;MarkupCompilePass2" />
+</Project>

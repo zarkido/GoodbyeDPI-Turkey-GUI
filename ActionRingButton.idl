@@ -1,0 +1,12 @@
+namespace GoodByDpi_App
+{
+    [default_interface]
+    runtimeclass ActionRingButton : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        ActionRingButton();
+        Boolean IsActive;
+        event Windows.Foundation.EventHandler<Boolean> StateToggled;
+        void PauseAnimation();
+        void ResumeAnimation();
+    }
+}
