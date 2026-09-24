@@ -22,12 +22,15 @@ namespace GoodByDpi_App::UI::Components
         Controls::FontIcon chevron,
         double dropdownWidth)
     {
+        if (m_isInitialized && m_trigger == trigger) return;
+
         m_trigger = trigger;
         m_selectedText = selectedText;
         m_chevron = chevron;
         m_dropdownWidth = dropdownWidth;
 
         if (!m_trigger) return;
+        m_isInitialized = true;
 
         SetHandCursor(m_trigger);
 

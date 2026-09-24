@@ -24,14 +24,11 @@ namespace winrt::GoodByDpi_App::implementation
 
     void App::OnLaunched(LaunchActivatedEventArgs const&)
     {
-        m_singleInstanceMutex = ::CreateMutexW(nullptr, TRUE, L"GoodByDpi_App_SingleInstance_Mutex");
+        m_singleInstanceMutex.Reset(::CreateMutexW(nullptr, TRUE, L"GoodByDpi_App_SingleInstance_Mutex"));
         if (::GetLastError() == ERROR_ALREADY_EXISTS)
         {
-            if (m_singleInstanceMutex)
-            {
-                ::CloseHandle(m_singleInstanceMutex);
-                m_singleInstanceMutex = nullptr;
-            }
+            m_singleInstanceMutex.Reset();
+            ::AllowSetForegroundWindow(ASFW_ANY);
             UINT const restoreMsg = ::RegisterWindowMessageW(L"GoodByDpi_RestoreInstance");
             ::PostMessageW(HWND_BROADCAST, restoreMsg, 0, 0);
             ::ExitProcess(0);

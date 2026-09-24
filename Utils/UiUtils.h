@@ -18,6 +18,16 @@ namespace GoodByDpi_App::Utils
         }
     }
 
+    inline winrt::Windows::UI::Color ColorArgb(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
+    {
+        return winrt::Microsoft::UI::ColorHelper::FromArgb(a, r, g, b);
+    }
+
+    inline winrt::Windows::UI::Color ColorRgb(uint8_t r, uint8_t g, uint8_t b)
+    {
+        return winrt::Microsoft::UI::ColorHelper::FromArgb(255, r, g, b);
+    }
+
     inline winrt::Windows::UI::Color LerpColor(winrt::Windows::UI::Color const& from, winrt::Windows::UI::Color const& to, double t)
     {
         double factor = std::clamp(t, 0.0, 1.0);

@@ -4,6 +4,28 @@
 
 namespace GoodByDpi_App::Utils
 {
+    std::filesystem::path GetExecutablePath()
+    {
+        wchar_t buffer[MAX_PATH];
+        ::GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+        return std::filesystem::path(buffer);
+    }
+
+    std::filesystem::path GetExecutableDirectory()
+    {
+        return GetExecutablePath().parent_path();
+    }
+
+    std::wstring GetLauncherExecutablePath()
+    {
+        wchar_t const* launcherEnv = _wgetenv(L"GOODBYDPI_LAUNCHER_EXE");
+        if (launcherEnv && wcslen(launcherEnv) > 0 && std::filesystem::exists(launcherEnv))
+        {
+            return std::wstring(launcherEnv);
+        }
+        return GetExecutablePath().wstring();
+    }
+
     std::filesystem::path GetAppDataDirectory()
     {
         wchar_t const* appData = _wgetenv(L"APPDATA");
@@ -22,9 +44,7 @@ namespace GoodByDpi_App::Utils
             }
             else
             {
-                wchar_t buffer[MAX_PATH];
-                ::GetModuleFileNameW(nullptr, buffer, MAX_PATH);
-                dir = std::filesystem::path(buffer).parent_path() / L"GoodByDpi";
+                dir = GetExecutableDirectory() / L"GoodByDpi";
             }
         }
 
@@ -50,9 +70,7 @@ namespace GoodByDpi_App::Utils
         std::error_code ec;
         if (!std::filesystem::exists(configPath, ec))
         {
-            wchar_t exeBuffer[MAX_PATH];
-            ::GetModuleFileNameW(nullptr, exeBuffer, MAX_PATH);
-            std::filesystem::path oldConfig = std::filesystem::path(exeBuffer).parent_path() / L"settings.ini";
+            std::filesystem::path oldConfig = GetExecutableDirectory() / L"settings.ini";
             if (std::filesystem::exists(oldConfig, ec))
             {
                 std::filesystem::copy_file(oldConfig, configPath, std::filesystem::copy_options::overwrite_existing, ec);

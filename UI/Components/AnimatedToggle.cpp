@@ -22,9 +22,12 @@ namespace GoodByDpi_App::UI::Components
         winrt::Microsoft::UI::Xaml::Controls::Border trackBorder,
         winrt::Microsoft::UI::Xaml::Shapes::Ellipse knob)
     {
+        if (m_isInitialized && m_clickTarget == clickTarget && m_trackBorder == trackBorder) return;
+
         m_clickTarget = clickTarget;
         m_trackBorder = trackBorder;
         m_knob = knob;
+        m_isInitialized = true;
 
         if (m_clickTarget)
         {

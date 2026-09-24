@@ -313,6 +313,72 @@ namespace GoodByDpi_App::ViewModels
         return Services::LocalizationService::Instance().GetString(L"LogRemoveWhitelist");
     }
 
+    std::wstring MainViewModel::UpdateAvailableText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"UpdateAvailable");
+    }
+
+    std::wstring MainViewModel::UpdateCheckingText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"UpdateChecking");
+    }
+
+    std::wstring MainViewModel::UpdateUpToDateText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"UpdateUpToDate");
+    }
+
+    std::wstring MainViewModel::UpdateNowText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"UpdateNow");
+    }
+
+    std::wstring MainViewModel::UpdateViewReleaseText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"UpdateViewRelease");
+    }
+
+    std::wstring MainViewModel::UpdateLaterText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"UpdateLater");
+    }
+
+    std::wstring MainViewModel::UpdateDownloadingText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"UpdateDownloading");
+    }
+
+    std::wstring MainViewModel::UpdateFailedText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"UpdateFailed");
+    }
+
+    std::wstring MainViewModel::SettingsCheckUpdatesText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"SettingsCheckUpdates");
+    }
+
+    std::wstring MainViewModel::SettingsCheckUpdatesDescText() const
+    {
+        return Services::LocalizationService::Instance().GetString(L"SettingsCheckUpdatesDesc");
+    }
+
+    bool MainViewModel::HasUpdateAvailable() const
+    {
+        return m_updateInfo.isUpdateAvailable;
+    }
+
+    Services::UpdateInfo MainViewModel::GetUpdateInfo() const
+    {
+        return m_updateInfo;
+    }
+
+    void MainViewModel::SetUpdateInfo(Services::UpdateInfo const& info)
+    {
+        m_updateInfo = info;
+        NotifyChanged();
+    }
+
     void MainViewModel::RegisterPropertyChangedCallback(std::function<void()> callback)
     {
         m_callbacks.push_back(callback);

@@ -85,8 +85,8 @@ namespace GoodByDpi_App::Services
 
     int PingService::MeasurePing(std::string const& ipStr)
     {
-        HANDLE hIcmpFile = ::IcmpCreateFile();
-        if (hIcmpFile == INVALID_HANDLE_VALUE)
+        HANDLE hIcmp = ::IcmpCreateFile();
+        if (hIcmp == INVALID_HANDLE_VALUE)
         {
             return -1;
         }
@@ -94,7 +94,7 @@ namespace GoodByDpi_App::Services
         IN_ADDR addr {};
         if (::inet_pton(AF_INET, ipStr.c_str(), &addr) != 1)
         {
-            ::IcmpCloseHandle(hIcmpFile);
+            ::IcmpCloseHandle(hIcmp);
             return -1;
         }
 
@@ -103,7 +103,7 @@ namespace GoodByDpi_App::Services
         std::vector<BYTE> replyBuffer(replySize, 0);
 
         DWORD replies = ::IcmpSendEcho(
-            hIcmpFile,
+            hIcmp,
             addr.S_un.S_addr,
             sendData,
             static_cast<WORD>(sizeof(sendData)),
@@ -123,7 +123,7 @@ namespace GoodByDpi_App::Services
             }
         }
 
-        ::IcmpCloseHandle(hIcmpFile);
+        ::IcmpCloseHandle(hIcmp);
         return result;
     }
 

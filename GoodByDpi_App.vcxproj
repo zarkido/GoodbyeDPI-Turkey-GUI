@@ -141,6 +141,7 @@
     <ClInclude Include="Services\WhitelistManager.h" />
     <ClInclude Include="Services\WinDivertDefs.h" />
     <ClInclude Include="Services\SettingsManager.h" />
+    <ClInclude Include="Services\UpdateService.h" />
     <ClInclude Include="UI\TrayManager.h" />
     <ClInclude Include="UI\Components\AnimatedToggle.h" />
     <ClInclude Include="UI\Components\DropdownMenu.h" />
@@ -148,6 +149,7 @@
     <ClInclude Include="UI\Components\LogCardFactory.h" />
     <ClInclude Include="UI\Components\WhitelistView.h" />
     <ClInclude Include="Utils\PathUtils.h" />
+    <ClInclude Include="Utils\ScopedHandle.h" />
     <ClInclude Include="Utils\StringUtils.h" />
     <ClInclude Include="Utils\UiUtils.h" />
     <ClInclude Include="ViewModels\MainViewModel.h" />
@@ -174,6 +176,7 @@
     <ClCompile Include="Services\TrafficLogger.cpp" />
     <ClCompile Include="Services\WhitelistManager.cpp" />
     <ClCompile Include="Services\SettingsManager.cpp" />
+    <ClCompile Include="Services\UpdateService.cpp" />
     <ClCompile Include="UI\TrayManager.cpp" />
     <ClCompile Include="UI\Components\AnimatedToggle.cpp" />
     <ClCompile Include="UI\Components\DropdownMenu.cpp" />

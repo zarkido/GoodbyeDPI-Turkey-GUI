@@ -43,6 +43,7 @@ namespace GoodByDpi_App::UI::Components
         winrt::Microsoft::UI::Xaml::Controls::FontIcon m_icon{ nullptr };
         winrt::Microsoft::UI::Xaml::Controls::TextBlock m_text{ nullptr };
 
+        bool m_isInitialized{ false };
         bool m_isHovered{ false };
         bool m_isActive{ false };
         bool m_hasActiveState{ false };

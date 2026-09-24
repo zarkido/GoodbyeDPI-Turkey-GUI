@@ -22,10 +22,15 @@ namespace GoodByDpi_App::UI::Components
         Button addBtn,
         TextBlock addBtnText)
     {
+        if (m_isInitialized && m_container == container) return;
+
         m_container = container;
         m_inputBox = inputBox;
         m_addBtn = addBtn;
         m_addBtnText = addBtnText;
+
+        if (!m_container) return;
+        m_isInitialized = true;
 
         if (m_addBtn)
         {

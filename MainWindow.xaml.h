@@ -3,6 +3,7 @@
 #include "MainWindow.xaml.g.h"
 #include <winrt/Microsoft.UI.Dispatching.h>
 #include "ViewModels/MainViewModel.h"
+#include "Services/UpdateService.h"
 #include "UI/TrayManager.h"
 #include "UI/Components/DropdownMenu.h"
 #include "UI/Components/HoverButton.h"
@@ -31,6 +32,8 @@ namespace winrt::GoodByDpi_App::implementation
         void StartAutoService();
 
     private:
+        static LRESULT CALLBACK MainWindowSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
         void InitializeWindowPresenter();
         void InitializeComponents();
         void InitializeTrayIcon();
@@ -50,6 +53,10 @@ namespace winrt::GoodByDpi_App::implementation
         void ClearLogVisuals();
         void CloseSettingsModal();
 
+        void CheckForUpdates(bool isManual);
+        winrt::fire_and_forget ShowUpdateDialog(::GoodByDpi_App::Services::UpdateInfo const& info);
+        winrt::fire_and_forget ShowManualCheckResultDialog(bool success, ::GoodByDpi_App::Services::UpdateInfo const& info);
+
         std::shared_ptr<::GoodByDpi_App::ViewModels::MainViewModel> m_viewModel;
         void* m_hwnd{ nullptr };
         ::GoodByDpi_App::UI::TrayManager m_trayManager;
@@ -61,6 +68,8 @@ namespace winrt::GoodByDpi_App::implementation
         ::GoodByDpi_App::UI::Components::HoverButton m_logToggleBtn;
         ::GoodByDpi_App::UI::Components::HoverButton m_logClearBtn;
         ::GoodByDpi_App::UI::Components::HoverButton m_settingsCloseBtn;
+        ::GoodByDpi_App::UI::Components::HoverButton m_updateBadgeBtn;
+        ::GoodByDpi_App::UI::Components::HoverButton m_settingsCheckUpdateBtn;
 
         ::GoodByDpi_App::UI::Components::DropdownMenu m_presetDropdown;
         ::GoodByDpi_App::UI::Components::DropdownMenu m_pingCountryDropdown;
@@ -75,6 +84,8 @@ namespace winrt::GoodByDpi_App::implementation
         std::chrono::steady_clock::time_point m_lastScrollInteractionTime{};
         bool m_isWindowVisible{ true };
         bool m_isLogOpen{ false };
+        bool m_isCheckingUpdates{ false };
+        bool m_isDownloadingUpdate{ false };
         double m_currentWindowWidth{ 1200.0 };
         double m_targetWindowWidth{ 1200.0 };
         winrt::Microsoft::UI::Dispatching::DispatcherQueue m_dispatcherQueue{ nullptr };

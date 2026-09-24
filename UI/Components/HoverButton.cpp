@@ -19,12 +19,15 @@ namespace GoodByDpi_App::UI::Components
         Controls::FontIcon icon,
         Controls::TextBlock text)
     {
+        if (m_isInitialized && m_button == button) return;
+
         m_button = button;
         m_icon = icon;
         m_text = text;
 
         if (!m_button) return;
 
+        m_isInitialized = true;
         SetHandCursor(m_button);
 
         m_button.PointerEntered([this](auto const&, auto const&) {

@@ -8,6 +8,7 @@
 #include "Services/PingService.h"
 #include "Services/WhitelistManager.h"
 #include "Services/TrafficLogger.h"
+#include "Services/UpdateService.h"
 
 namespace GoodByDpi_App::ViewModels
 {
@@ -75,12 +76,28 @@ namespace GoodByDpi_App::ViewModels
         std::wstring LogAddWhitelist() const;
         std::wstring LogRemoveWhitelist() const;
 
+        std::wstring UpdateAvailableText() const;
+        std::wstring UpdateCheckingText() const;
+        std::wstring UpdateUpToDateText() const;
+        std::wstring UpdateNowText() const;
+        std::wstring UpdateViewReleaseText() const;
+        std::wstring UpdateLaterText() const;
+        std::wstring UpdateDownloadingText() const;
+        std::wstring UpdateFailedText() const;
+        std::wstring SettingsCheckUpdatesText() const;
+        std::wstring SettingsCheckUpdatesDescText() const;
+
+        bool HasUpdateAvailable() const;
+        Services::UpdateInfo GetUpdateInfo() const;
+        void SetUpdateInfo(Services::UpdateInfo const& info);
+
         void RegisterPropertyChangedCallback(std::function<void()> callback);
 
     private:
         void NotifyChanged();
 
         bool m_isRunning{ false };
+        Services::UpdateInfo m_updateInfo;
         std::vector<std::function<void()>> m_callbacks;
     };
 }

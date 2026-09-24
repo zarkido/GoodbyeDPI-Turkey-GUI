@@ -113,6 +113,17 @@ namespace GoodByDpi_App::Services
         m_stringsEn[L"LogStatusBypassed"] = L"Whitelist";
         m_stringsEn[L"LogAddWhitelist"] = L"+ Whitelist";
         m_stringsEn[L"LogRemoveWhitelist"] = L"- Remove";
+        m_stringsEn[L"UpdateAvailable"] = L"Update Available";
+        m_stringsEn[L"UpdateAvailableDesc"] = L"A new version of GoodByDpi is available!";
+        m_stringsEn[L"UpdateChecking"] = L"Checking for updates...";
+        m_stringsEn[L"UpdateUpToDate"] = L"GoodByDpi is up to date.";
+        m_stringsEn[L"UpdateNow"] = L"Update Now";
+        m_stringsEn[L"UpdateViewRelease"] = L"View Release";
+        m_stringsEn[L"UpdateLater"] = L"Later";
+        m_stringsEn[L"UpdateDownloading"] = L"Downloading update...";
+        m_stringsEn[L"UpdateFailed"] = L"Update download failed. Please visit GitHub.";
+        m_stringsEn[L"SettingsCheckUpdates"] = L"Check for Updates";
+        m_stringsEn[L"SettingsCheckUpdatesDesc"] = L"Check for newer versions on GitHub";
 
         m_stringsTr[L"AppTitle"] = L"GoodByDpi";
         m_stringsTr[L"SettingsButton"] = L"Ayarlar";
@@ -160,5 +171,16 @@ namespace GoodByDpi_App::Services
         m_stringsTr[L"LogStatusBypassed"] = L"Whitelist";
         m_stringsTr[L"LogAddWhitelist"] = L"+ Whitelist";
         m_stringsTr[L"LogRemoveWhitelist"] = L"- Kaldır";
+        m_stringsTr[L"UpdateAvailable"] = L"Güncelleme Mevcut";
+        m_stringsTr[L"UpdateAvailableDesc"] = L"GoodByDpi için yeni bir sürüm yayınlandı!";
+        m_stringsTr[L"UpdateChecking"] = L"Güncellemeler denetleniyor...";
+        m_stringsTr[L"UpdateUpToDate"] = L"En son sürümü kullanıyorsunuz.";
+        m_stringsTr[L"UpdateNow"] = L"Şimdi Güncelle";
+        m_stringsTr[L"UpdateViewRelease"] = L"Sürümü İncele";
+        m_stringsTr[L"UpdateLater"] = L"Daha Sonra";
+        m_stringsTr[L"UpdateDownloading"] = L"Güncelleme indiriliyor...";
+        m_stringsTr[L"UpdateFailed"] = L"Güncelleme indirilemedi. Lütfen GitHub sayfasını ziyaret edin.";
+        m_stringsTr[L"SettingsCheckUpdates"] = L"Güncellemeleri Denetle";
+        m_stringsTr[L"SettingsCheckUpdatesDesc"] = L"GitHub üzerinden yeni sürümleri kontrol edin";
     }
 }

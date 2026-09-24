@@ -47,6 +47,7 @@ namespace GoodByDpi_App::UI::Components
         winrt::Microsoft::UI::Xaml::Controls::Flyout m_flyout{ nullptr };
         winrt::Microsoft::UI::Xaml::Controls::StackPanel m_itemsPanel{ nullptr };
 
+        bool m_isInitialized{ false };
         double m_dropdownWidth{ 462.0 };
         std::vector<DropdownItem> m_items;
         std::wstring m_selectedTag;

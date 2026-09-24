@@ -3,6 +3,8 @@
 #if __has_include("MainWindow.g.cpp")
 #include "MainWindow.g.cpp"
 #endif
+#include "Utils/PathUtils.h"
+#include "Utils/UiUtils.h"
 #include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Text.h>
 #include <microsoft.ui.xaml.window.h>
@@ -42,6 +44,14 @@ namespace winrt::GoodByDpi_App::implementation
 
         m_restoreMsg = ::RegisterWindowMessageW(L"GoodByDpi_RestoreInstance");
         ::ChangeWindowMessageFilterEx(static_cast<HWND>(m_hwnd), m_restoreMsg, MSGFLT_ALLOW, nullptr);
+        ::SetWindowSubclass(static_cast<HWND>(m_hwnd), MainWindowSubclassProc, 2, reinterpret_cast<DWORD_PTR>(this));
+
+        AppTitleBar().DoubleTapped([](auto const&, Microsoft::UI::Xaml::Input::DoubleTappedRoutedEventArgs const& e) {
+            e.Handled(true);
+        });
+        TitleDragArea().DoubleTapped([](auto const&, Microsoft::UI::Xaml::Input::DoubleTappedRoutedEventArgs const& e) {
+            e.Handled(true);
+        });
 
         m_windowResizeTimer = DispatcherTimer();
         m_windowResizeTimer.Interval(std::chrono::milliseconds(16));
@@ -164,6 +174,7 @@ namespace winrt::GoodByDpi_App::implementation
 
         UpdateLocalizedStrings();
         UpdateStatusDisplay();
+        CheckForUpdates(false);
     }
 
     void MainWindow::InitializeWindowPresenter()
@@ -177,16 +188,17 @@ namespace winrt::GoodByDpi_App::implementation
         }
         this->ExtendsContentIntoTitleBar(true);
 
+        LONG_PTR style = ::GetWindowLongPtrW(static_cast<HWND>(m_hwnd), GWL_STYLE);
+        style &= ~WS_MAXIMIZEBOX;
+        ::SetWindowLongPtrW(static_cast<HWND>(m_hwnd), GWL_STYLE, style);
+
         int borderX = GetWindowBorderX(static_cast<HWND>(m_hwnd));
         this->AppWindow().Resize({ 1200 + borderX, 700 });
 
-        wchar_t buffer[MAX_PATH];
-        ::GetModuleFileNameW(nullptr, buffer, MAX_PATH);
-        std::filesystem::path exePath(buffer);
-        std::filesystem::path icoPath = exePath.parent_path() / L"Assets" / L"app.ico";
+        std::filesystem::path icoPath = ::GoodByDpi_App::Utils::GetExecutableDirectory() / L"Assets" / L"app.ico";
         if (!std::filesystem::exists(icoPath))
         {
-            icoPath = exePath.parent_path() / L"app.ico";
+            icoPath = ::GoodByDpi_App::Utils::GetExecutableDirectory() / L"app.ico";
         }
         if (std::filesystem::exists(icoPath))
         {
@@ -271,6 +283,35 @@ namespace winrt::GoodByDpi_App::implementation
             Microsoft::UI::ColorHelper::FromArgb(255, 248, 250, 252));
         m_settingsCloseBtn.SetOnClick([this]() {
             CloseSettingsModal();
+        });
+
+        m_updateBadgeBtn.Initialize(this->UpdateBadgeButton(), nullptr, this->UpdateBadgeText());
+        m_updateBadgeBtn.SetColors(
+            ColorRgb(2, 132, 199),
+            ColorRgb(3, 105, 161),
+            ColorRgb(255, 255, 255),
+            ColorRgb(255, 255, 255));
+        m_updateBadgeBtn.SetBorders(
+            ColorRgb(56, 189, 248),
+            ColorRgb(125, 211, 252));
+        m_updateBadgeBtn.SetOnClick([this]() {
+            if (m_viewModel)
+            {
+                ShowUpdateDialog(m_viewModel->GetUpdateInfo());
+            }
+        });
+
+        m_settingsCheckUpdateBtn.Initialize(this->SettingsCheckUpdateBtn(), this->SettingsCheckUpdateIcon(), this->SettingsCheckUpdateBtnText());
+        m_settingsCheckUpdateBtn.SetColors(
+            ColorRgb(22, 34, 56),
+            ColorRgb(30, 58, 95),
+            ColorRgb(56, 189, 248),
+            ColorRgb(125, 211, 252));
+        m_settingsCheckUpdateBtn.SetBorders(
+            ColorRgb(45, 59, 85),
+            ColorRgb(56, 189, 248));
+        m_settingsCheckUpdateBtn.SetOnClick([this]() {
+            CheckForUpdates(true);
         });
 
         m_autoStartToggle.Initialize(this->AutoStartRow(), this->AutoStartToggle(), this->AutoStartKnob());
@@ -377,9 +418,24 @@ namespace winrt::GoodByDpi_App::implementation
 
         RefreshWhitelistView();
 
+        SettingsUpdateTitle().Text(m_viewModel->SettingsCheckUpdatesText());
+        SettingsUpdateDesc().Text(m_viewModel->SettingsCheckUpdatesDescText());
+        SettingsCheckUpdateBtnText().Text(isTr ? L"Denetle" : L"Check");
+
+        if (m_viewModel && m_viewModel->HasUpdateAvailable())
+        {
+            UpdateBadgeText().Text(m_viewModel->GetUpdateInfo().latestVersion);
+            UpdateBadgeButton().Visibility(Visibility::Visible);
+        }
+        else
+        {
+            UpdateBadgeButton().Visibility(Visibility::Collapsed);
+        }
+
         Controls::ToolTipService::SetToolTip(SettingsButton(), box_value(m_viewModel->SettingsButtonText()));
         Controls::ToolTipService::SetToolTip(MinimizeButton(), box_value(m_viewModel->TitleBarMinimize()));
         Controls::ToolTipService::SetToolTip(CloseButton(), box_value(m_viewModel->TitleBarClose()));
+        Controls::ToolTipService::SetToolTip(UpdateBadgeButton(), box_value(m_viewModel->UpdateAvailableText()));
     }
 
     void MainWindow::UpdateStatusDisplay()
@@ -748,6 +804,257 @@ namespace winrt::GoodByDpi_App::implementation
         m_presetDropdown.Close();
         m_pingCountryDropdown.Close();
         m_langDropdown.Close();
+    }
+
+    LRESULT CALLBACK MainWindow::MainWindowSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+    {
+        auto pThis = reinterpret_cast<MainWindow*>(dwRefData);
+
+        if (uMsg == WM_NCLBUTTONDBLCLK)
+        {
+            return 0;
+        }
+
+        if (uMsg == WM_SYSCOMMAND && ((wParam & 0xFFF0) == SC_MAXIMIZE))
+        {
+            return 0;
+        }
+
+        if (pThis && pThis->m_restoreMsg != 0 && uMsg == pThis->m_restoreMsg)
+        {
+            pThis->RestoreWindow();
+            return 0;
+        }
+
+        if (uMsg == WM_NCDESTROY)
+        {
+            ::RemoveWindowSubclass(hWnd, MainWindowSubclassProc, uIdSubclass);
+        }
+
+        return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+    }
+
+    void MainWindow::CheckForUpdates(bool isManual)
+    {
+        if (m_isCheckingUpdates) return;
+        m_isCheckingUpdates = true;
+
+        if (isManual && SettingsCheckUpdateBtnText())
+        {
+            SettingsCheckUpdateBtnText().Text(m_viewModel ? m_viewModel->UpdateCheckingText() : L"...");
+        }
+
+        UpdateService::Instance().CheckForUpdatesAsync([this, isManual](bool success, UpdateInfo const& info) {
+            if (m_dispatcherQueue)
+            {
+                m_dispatcherQueue.TryEnqueue([this, isManual, success, info]() {
+                    m_isCheckingUpdates = false;
+                    bool isTr = (m_viewModel && m_viewModel->GetCurrentLanguage() == AppLanguage::Turkish);
+                    if (SettingsCheckUpdateBtnText())
+                    {
+                        SettingsCheckUpdateBtnText().Text(isTr ? L"Denetle" : L"Check");
+                    }
+
+                    if (success)
+                    {
+                        if (m_viewModel)
+                        {
+                            m_viewModel->SetUpdateInfo(info);
+                        }
+
+                        if (info.isUpdateAvailable)
+                        {
+                            if (UpdateBadgeText())
+                            {
+                                UpdateBadgeText().Text(info.latestVersion);
+                            }
+                            if (UpdateBadgeButton())
+                            {
+                                UpdateBadgeButton().Visibility(Visibility::Visible);
+                            }
+                            if (isManual)
+                            {
+                                ShowUpdateDialog(info);
+                            }
+                        }
+                        else
+                        {
+                            if (UpdateBadgeButton())
+                            {
+                                UpdateBadgeButton().Visibility(Visibility::Collapsed);
+                            }
+                            if (isManual)
+                            {
+                                ShowManualCheckResultDialog(true, info);
+                            }
+                        }
+                    }
+                    else if (isManual)
+                    {
+                        ShowManualCheckResultDialog(false, info);
+                    }
+                });
+            }
+        });
+    }
+
+    winrt::fire_and_forget MainWindow::ShowUpdateDialog(UpdateInfo const& info)
+    {
+        auto dialog = Controls::ContentDialog();
+        dialog.XamlRoot(this->Content().XamlRoot());
+        bool isTr = (m_viewModel && m_viewModel->GetCurrentLanguage() == AppLanguage::Turkish);
+
+        dialog.Title(box_value(isTr ? L"Yeni Güncelleme Mevcut!" : L"New Update Available!"));
+        dialog.PrimaryButtonText(m_viewModel ? m_viewModel->UpdateNowText() : L"Update Now");
+        dialog.SecondaryButtonText(m_viewModel ? m_viewModel->UpdateViewReleaseText() : L"View Release");
+        dialog.CloseButtonText(m_viewModel ? m_viewModel->UpdateLaterText() : L"Later");
+        dialog.DefaultButton(Controls::ContentDialogButton::Primary);
+
+        auto rootPanel = Controls::StackPanel();
+        rootPanel.Spacing(12);
+        rootPanel.Width(380.0);
+
+        auto msgBlock = Controls::TextBlock();
+        std::wstring msg = isTr
+            ? (L"GoodByDpi için yeni bir sürüm (" + info.latestVersion + L") yayınlandı!\nMevcut sürümünüz: " + info.currentVersion)
+            : (L"A new version (" + info.latestVersion + L") of GoodByDpi is available!\nYour current version: " + info.currentVersion);
+        msgBlock.Text(msg);
+        msgBlock.TextWrapping(TextWrapping::Wrap);
+        msgBlock.FontSize(13.5);
+        msgBlock.Foreground(SolidBrush(255, 226, 232, 240));
+        rootPanel.Children().Append(msgBlock);
+
+        if (!info.releaseTitle.empty())
+        {
+            auto titleBlock = Controls::TextBlock();
+            titleBlock.Text(info.releaseTitle);
+            titleBlock.FontSize(12.0);
+            titleBlock.FontWeight(winrt::Microsoft::UI::Text::FontWeights::SemiBold());
+            titleBlock.Foreground(SolidBrush(255, 56, 189, 248));
+            rootPanel.Children().Append(titleBlock);
+        }
+
+        dialog.Content(rootPanel);
+
+        dialog.SecondaryButtonClick([info](Controls::ContentDialog const&, Controls::ContentDialogButtonClickEventArgs const&) {
+            UpdateService::Instance().OpenReleasePage(info.releaseUrl);
+        });
+
+        dialog.PrimaryButtonClick([this, dialog, info, isTr](Controls::ContentDialog const& sender, Controls::ContentDialogButtonClickEventArgs const& args) {
+            if (info.downloadUrl.empty() || info.downloadUrl.find(L"http") != 0)
+            {
+                UpdateService::Instance().OpenReleasePage(info.releaseUrl);
+                return;
+            }
+
+            args.Cancel(true);
+            sender.IsPrimaryButtonEnabled(false);
+            sender.IsSecondaryButtonEnabled(false);
+            sender.Title(box_value(isTr ? L"Güncelleme İndiriliyor..." : L"Downloading Update..."));
+
+            auto dlPanel = Controls::StackPanel();
+            dlPanel.Spacing(12.0);
+            dlPanel.Width(380.0);
+
+            auto statusText = Controls::TextBlock();
+            statusText.Text(isTr ? L"Yeni sürüm indiriliyor, lütfen bekleyin..." : L"Downloading latest version, please wait...");
+            statusText.FontSize(13.0);
+            statusText.Foreground(SolidBrush(255, 148, 163, 184));
+            dlPanel.Children().Append(statusText);
+
+            auto progBar = Controls::ProgressBar();
+            progBar.Height(8.0);
+            progBar.CornerRadius(CornerRadius{ 4.0, 4.0, 4.0, 4.0 });
+            progBar.IsIndeterminate(true);
+            dlPanel.Children().Append(progBar);
+
+            auto percentText = Controls::TextBlock();
+            percentText.FontSize(12.0);
+            percentText.Foreground(SolidBrush(255, 56, 189, 248));
+            percentText.HorizontalAlignment(HorizontalAlignment::Right);
+            dlPanel.Children().Append(percentText);
+
+            sender.Content(dlPanel);
+
+            UpdateService::Instance().DownloadUpdateAsync(
+                info.downloadUrl,
+                [this, progBar, percentText](size_t downloaded, size_t total) {
+                    if (m_dispatcherQueue && total > 0)
+                    {
+                        m_dispatcherQueue.TryEnqueue([progBar, percentText, downloaded, total]() {
+                            progBar.IsIndeterminate(false);
+                            double percent = (static_cast<double>(downloaded) / static_cast<double>(total)) * 100.0;
+                            progBar.Value(percent);
+                            double dlMb = static_cast<double>(downloaded) / (1024.0 * 1024.0);
+                            double totMb = static_cast<double>(total) / (1024.0 * 1024.0);
+                            wchar_t buf[64];
+                            swprintf_s(buf, L"%.1f MB / %.1f MB (%%%d)", dlMb, totMb, static_cast<int>(percent));
+                            percentText.Text(buf);
+                        });
+                    }
+                },
+                [this, sender, statusText, progBar, isTr](bool success, std::wstring const& downloadedFile) {
+                    if (m_dispatcherQueue)
+                    {
+                        m_dispatcherQueue.TryEnqueue([this, sender, statusText, progBar, downloadedFile, success, isTr]() {
+                            if (success)
+                            {
+                                progBar.IsIndeterminate(true);
+                                statusText.Text(isTr ? L"Güncelleme kuruluyor ve uygulama yeniden başlatılıyor..." : L"Applying update and restarting application...");
+                                if (UpdateService::Instance().ApplyUpdateAndRestart(downloadedFile))
+                                {
+                                    ExitApplication();
+                                }
+                                else
+                                {
+                                    statusText.Text(isTr ? L"Güncelleme uygulanamadı. Sürüm sayfasından manuel indirebilirsiniz." : L"Failed to apply update. You can download manually from GitHub.");
+                                    sender.IsPrimaryButtonEnabled(true);
+                                    sender.PrimaryButtonText(isTr ? L"GitHub'a Git" : L"Go to GitHub");
+                                }
+                            }
+                            else
+                            {
+                                statusText.Text(isTr ? L"İndirme başarısız oldu. Lütfen internet bağlantınızı kontrol edin." : L"Download failed. Please check your internet connection.");
+                                sender.IsPrimaryButtonEnabled(true);
+                                sender.PrimaryButtonText(isTr ? L"GitHub'a Git" : L"Go to GitHub");
+                            }
+                        });
+                    }
+                }
+            );
+        });
+
+        co_await dialog.ShowAsync();
+    }
+
+    winrt::fire_and_forget MainWindow::ShowManualCheckResultDialog(bool success, UpdateInfo const& info)
+    {
+        auto dialog = Controls::ContentDialog();
+        dialog.XamlRoot(this->Content().XamlRoot());
+        bool isTr = (m_viewModel && m_viewModel->GetCurrentLanguage() == AppLanguage::Turkish);
+
+        dialog.Title(box_value(isTr ? L"Güncelleme Denetimi" : L"Update Check"));
+        dialog.CloseButtonText(isTr ? L"Tamam" : L"OK");
+        dialog.DefaultButton(Controls::ContentDialogButton::Close);
+
+        auto block = Controls::TextBlock();
+        block.TextWrapping(TextWrapping::Wrap);
+        block.FontSize(13.5);
+        block.Width(360.0);
+
+        if (!success)
+        {
+            block.Text(isTr ? L"Güncellemeler denetlenirken bir hata oluştu. Lütfen internet bağlantınızı kontrol edin." : L"Failed to check for updates. Please check your internet connection.");
+            block.Foreground(SolidBrush(255, 248, 113, 113));
+        }
+        else
+        {
+            block.Text(isTr ? (L"Harika! En güncel sürümü kullanıyorsunuz (" + info.currentVersion + L").") : (L"Great! You are on the latest version (" + info.currentVersion + L")."));
+            block.Foreground(SolidBrush(255, 52, 211, 153));
+        }
+
+        dialog.Content(block);
+        co_await dialog.ShowAsync();
     }
 }
 

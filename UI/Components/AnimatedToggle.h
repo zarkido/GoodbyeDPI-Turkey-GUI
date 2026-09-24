@@ -32,6 +32,7 @@ namespace GoodByDpi_App::UI::Components
         winrt::Microsoft::UI::Xaml::Shapes::Ellipse m_knob{ nullptr };
         winrt::Microsoft::UI::Xaml::DispatcherTimer m_timer{ nullptr };
 
+        bool m_isInitialized{ false };
         bool m_isOn{ false };
         double m_currentPos{ 0.0 };
         double m_targetPos{ 0.0 };

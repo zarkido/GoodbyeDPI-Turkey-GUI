@@ -35,6 +35,8 @@ namespace GoodByDpi_App::UI::Components
         winrt::Microsoft::UI::Xaml::Controls::TextBox m_inputBox{ nullptr };
         winrt::Microsoft::UI::Xaml::Controls::Button m_addBtn{ nullptr };
         winrt::Microsoft::UI::Xaml::Controls::TextBlock m_addBtnText{ nullptr };
+
+        bool m_isInitialized{ false };
         std::function<void(std::wstring const& item)> m_onAdd;
         std::function<void(std::wstring const& item)> m_onDelete;
     };

@@ -7,6 +7,20 @@
 #include <comdef.h>
 #pragma comment(lib, "taskschd.lib")
 
+_COM_SMARTPTR_TYPEDEF(ITaskService, IID_ITaskService);
+_COM_SMARTPTR_TYPEDEF(ITaskFolder, IID_ITaskFolder);
+_COM_SMARTPTR_TYPEDEF(ITaskDefinition, IID_ITaskDefinition);
+_COM_SMARTPTR_TYPEDEF(IRegistrationInfo, IID_IRegistrationInfo);
+_COM_SMARTPTR_TYPEDEF(IPrincipal, IID_IPrincipal);
+_COM_SMARTPTR_TYPEDEF(ITaskSettings, IID_ITaskSettings);
+_COM_SMARTPTR_TYPEDEF(ITriggerCollection, IID_ITriggerCollection);
+_COM_SMARTPTR_TYPEDEF(ITrigger, IID_ITrigger);
+_COM_SMARTPTR_TYPEDEF(ILogonTrigger, IID_ILogonTrigger);
+_COM_SMARTPTR_TYPEDEF(IActionCollection, IID_IActionCollection);
+_COM_SMARTPTR_TYPEDEF(IAction, IID_IAction);
+_COM_SMARTPTR_TYPEDEF(IExecAction, IID_IExecAction);
+_COM_SMARTPTR_TYPEDEF(IRegisteredTask, IID_IRegisteredTask);
+
 namespace GoodByDpi_App::Services
 {
     void AutoStartManager::ApplyTaskScheduler(bool enable, std::wstring const& targetExePath)
@@ -14,104 +28,93 @@ namespace GoodByDpi_App::Services
         HRESULT hr = ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
         bool coInit = SUCCEEDED(hr);
 
-        ITaskService* pService = nullptr;
-        hr = ::CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER, IID_ITaskService, reinterpret_cast<void**>(&pService));
-        if (SUCCEEDED(hr) && pService)
         {
-            hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
-            if (SUCCEEDED(hr))
+            ITaskServicePtr pService;
+            hr = ::CoCreateInstance(CLSID_TaskScheduler, nullptr, CLSCTX_INPROC_SERVER, IID_ITaskService, reinterpret_cast<void**>(&pService));
+            if (SUCCEEDED(hr) && pService)
             {
-                ITaskFolder* pRootFolder = nullptr;
-                hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
-                if (SUCCEEDED(hr) && pRootFolder)
+                hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
+                if (SUCCEEDED(hr))
                 {
-                    pRootFolder->DeleteTask(_bstr_t(L"GoodByDpi"), 0);
-
-                    if (enable && !targetExePath.empty())
+                    ITaskFolderPtr pRootFolder;
+                    hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+                    if (SUCCEEDED(hr) && pRootFolder)
                     {
-                        ITaskDefinition* pTask = nullptr;
-                        hr = pService->NewTask(0, &pTask);
-                        if (SUCCEEDED(hr) && pTask)
+                        pRootFolder->DeleteTask(_bstr_t(L"GoodByDpi"), 0);
+
+                        if (enable && !targetExePath.empty())
                         {
-                            IRegistrationInfo* pRegInfo = nullptr;
-                            if (SUCCEEDED(pTask->get_RegistrationInfo(&pRegInfo)) && pRegInfo)
+                            ITaskDefinitionPtr pTask;
+                            hr = pService->NewTask(0, &pTask);
+                            if (SUCCEEDED(hr) && pTask)
                             {
-                                pRegInfo->put_Author(_bstr_t(L"GoodByDpi"));
-                                pRegInfo->Release();
-                            }
-
-                            IPrincipal* pPrincipal = nullptr;
-                            if (SUCCEEDED(pTask->get_Principal(&pPrincipal)) && pPrincipal)
-                            {
-                                pPrincipal->put_RunLevel(TASK_RUNLEVEL_HIGHEST);
-                                pPrincipal->put_LogonType(TASK_LOGON_INTERACTIVE_TOKEN);
-                                pPrincipal->Release();
-                            }
-
-                            ITaskSettings* pSettings = nullptr;
-                            if (SUCCEEDED(pTask->get_Settings(&pSettings)) && pSettings)
-                            {
-                                pSettings->put_StartWhenAvailable(VARIANT_TRUE);
-                                pSettings->put_DisallowStartIfOnBatteries(VARIANT_FALSE);
-                                pSettings->put_StopIfGoingOnBatteries(VARIANT_FALSE);
-                                pSettings->put_ExecutionTimeLimit(_bstr_t(L"PT0S"));
-                                pSettings->Release();
-                            }
-
-                            ITriggerCollection* pTriggerCollection = nullptr;
-                            if (SUCCEEDED(pTask->get_Triggers(&pTriggerCollection)) && pTriggerCollection)
-                            {
-                                ITrigger* pTrigger = nullptr;
-                                if (SUCCEEDED(pTriggerCollection->Create(TASK_TRIGGER_LOGON, &pTrigger)) && pTrigger)
+                                IRegistrationInfoPtr pRegInfo;
+                                if (SUCCEEDED(pTask->get_RegistrationInfo(&pRegInfo)) && pRegInfo)
                                 {
-                                    ILogonTrigger* pLogonTrigger = nullptr;
-                                    if (SUCCEEDED(pTrigger->QueryInterface(IID_ILogonTrigger, reinterpret_cast<void**>(&pLogonTrigger))) && pLogonTrigger)
-                                    {
-                                        pLogonTrigger->put_Enabled(VARIANT_TRUE);
-                                        pLogonTrigger->Release();
-                                    }
-                                    pTrigger->Release();
+                                    pRegInfo->put_Author(_bstr_t(L"GoodByDpi"));
                                 }
-                                pTriggerCollection->Release();
-                            }
 
-                            IActionCollection* pActionCollection = nullptr;
-                            if (SUCCEEDED(pTask->get_Actions(&pActionCollection)) && pActionCollection)
-                            {
-                                IAction* pAction = nullptr;
-                                if (SUCCEEDED(pActionCollection->Create(TASK_ACTION_EXEC, &pAction)) && pAction)
+                                IPrincipalPtr pPrincipal;
+                                if (SUCCEEDED(pTask->get_Principal(&pPrincipal)) && pPrincipal)
                                 {
-                                    IExecAction* pExecAction = nullptr;
-                                    if (SUCCEEDED(pAction->QueryInterface(IID_IExecAction, reinterpret_cast<void**>(&pExecAction))) && pExecAction)
-                                    {
-                                        pExecAction->put_Path(_bstr_t(targetExePath.c_str()));
-                                        pExecAction->put_Arguments(_bstr_t(L"--autostart"));
-                                        pExecAction->Release();
-                                    }
-                                    pAction->Release();
+                                    pPrincipal->put_RunLevel(TASK_RUNLEVEL_HIGHEST);
+                                    pPrincipal->put_LogonType(TASK_LOGON_INTERACTIVE_TOKEN);
                                 }
-                                pActionCollection->Release();
-                            }
 
-                            IRegisteredTask* pRegisteredTask = nullptr;
-                            pRootFolder->RegisterTaskDefinition(
-                                _bstr_t(L"GoodByDpi"),
-                                pTask,
-                                TASK_CREATE_OR_UPDATE,
-                                _variant_t(),
-                                _variant_t(),
-                                TASK_LOGON_INTERACTIVE_TOKEN,
-                                _variant_t(L""),
-                                &pRegisteredTask
-                            );
-                            if (pRegisteredTask) pRegisteredTask->Release();
-                            pTask->Release();
+                                ITaskSettingsPtr pSettings;
+                                if (SUCCEEDED(pTask->get_Settings(&pSettings)) && pSettings)
+                                {
+                                    pSettings->put_StartWhenAvailable(VARIANT_TRUE);
+                                    pSettings->put_DisallowStartIfOnBatteries(VARIANT_FALSE);
+                                    pSettings->put_StopIfGoingOnBatteries(VARIANT_FALSE);
+                                    pSettings->put_ExecutionTimeLimit(_bstr_t(L"PT0S"));
+                                }
+
+                                ITriggerCollectionPtr pTriggerCollection;
+                                if (SUCCEEDED(pTask->get_Triggers(&pTriggerCollection)) && pTriggerCollection)
+                                {
+                                    ITriggerPtr pTrigger;
+                                    if (SUCCEEDED(pTriggerCollection->Create(TASK_TRIGGER_LOGON, &pTrigger)) && pTrigger)
+                                    {
+                                        ILogonTriggerPtr pLogonTrigger;
+                                        if (SUCCEEDED(pTrigger->QueryInterface(IID_ILogonTrigger, reinterpret_cast<void**>(&pLogonTrigger))) && pLogonTrigger)
+                                        {
+                                            pLogonTrigger->put_Enabled(VARIANT_TRUE);
+                                        }
+                                    }
+                                }
+
+                                IActionCollectionPtr pActionCollection;
+                                if (SUCCEEDED(pTask->get_Actions(&pActionCollection)) && pActionCollection)
+                                {
+                                    IActionPtr pAction;
+                                    if (SUCCEEDED(pActionCollection->Create(TASK_ACTION_EXEC, &pAction)) && pAction)
+                                    {
+                                        IExecActionPtr pExecAction;
+                                        if (SUCCEEDED(pAction->QueryInterface(IID_IExecAction, reinterpret_cast<void**>(&pExecAction))) && pExecAction)
+                                        {
+                                            pExecAction->put_Path(_bstr_t(targetExePath.c_str()));
+                                            pExecAction->put_Arguments(_bstr_t(L"--autostart"));
+                                        }
+                                    }
+                                }
+
+                                IRegisteredTaskPtr pRegisteredTask;
+                                pRootFolder->RegisterTaskDefinition(
+                                    _bstr_t(L"GoodByDpi"),
+                                    pTask,
+                                    TASK_CREATE_OR_UPDATE,
+                                    _variant_t(),
+                                    _variant_t(),
+                                    TASK_LOGON_INTERACTIVE_TOKEN,
+                                    _variant_t(L""),
+                                    &pRegisteredTask
+                                );
+                            }
                         }
                     }
-                    pRootFolder->Release();
                 }
             }
-            pService->Release();
         }
 
         if (coInit)
@@ -149,9 +152,7 @@ namespace GoodByDpi_App::Services
             }
             else
             {
-                wchar_t exeBuffer[MAX_PATH];
-                ::GetModuleFileNameW(nullptr, exeBuffer, MAX_PATH);
-                targetExePath = exeBuffer;
+                targetExePath = Utils::GetExecutablePath().wstring();
             }
 
             std::wstring quoted = L"\"" + targetExePath + L"\" --autostart";

@@ -5,6 +5,8 @@
 #include "CrashLogger.h"
 #include "DomainResolver.h"
 #include "Utils/StringUtils.h"
+#include "Utils/ScopedHandle.h"
+#include "Utils/PathUtils.h"
 #include <ws2tcpip.h>
 #include <winsvc.h>
 #include <filesystem>
@@ -419,37 +421,33 @@ namespace GoodByDpi_App::Services
 
         std::string filter = "(!loopback and ((outbound and (tcp.DstPort == 80 or tcp.DstPort == 443 or udp.DstPort == 53 or (udp.DstPort == 443 and udp.PayloadLength >= 1200))) or (inbound and (udp.SrcPort == 53 or udp.SrcPort == 1253))))";
 
-        SC_HANDLE hSCM = ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
+        Utils::ScopedServiceHandle hSCM(::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_ALL_ACCESS));
         if (!hSCM)
         {
-            hSCM = ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
+            hSCM.Reset(::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT));
         }
         if (hSCM)
         {
-            SC_HANDLE hService = ::OpenServiceW(hSCM, L"WinDivert", SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
+            Utils::ScopedServiceHandle hService(::OpenServiceW(hSCM.Get(), L"WinDivert", SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG));
             if (hService)
             {
                 DWORD bytesNeeded = 0;
-                ::QueryServiceConfigW(hService, nullptr, 0, &bytesNeeded);
+                ::QueryServiceConfigW(hService.Get(), nullptr, 0, &bytesNeeded);
                 if (::GetLastError() == ERROR_INSUFFICIENT_BUFFER)
                 {
                     std::vector<BYTE> buf(bytesNeeded);
                     auto pConfig = reinterpret_cast<LPQUERY_SERVICE_CONFIGW>(buf.data());
-                    if (::QueryServiceConfigW(hService, pConfig, bytesNeeded, &bytesNeeded))
+                    if (::QueryServiceConfigW(hService.Get(), pConfig, bytesNeeded, &bytesNeeded))
                     {
-                        wchar_t exeBuffer[MAX_PATH];
-                        ::GetModuleFileNameW(nullptr, exeBuffer, MAX_PATH);
-                        std::wstring currentSysStr = (std::filesystem::path(exeBuffer).parent_path() / L"WinDivert64.sys").wstring();
+                        std::wstring currentSysStr = (Utils::GetExecutableDirectory() / L"WinDivert64.sys").wstring();
 
                         if (pConfig->dwStartType != SERVICE_DEMAND_START || (pConfig->lpBinaryPathName && wcsstr(pConfig->lpBinaryPathName, currentSysStr.c_str()) == nullptr))
                         {
-                            ::ChangeServiceConfigW(hService, SERVICE_NO_CHANGE, SERVICE_DEMAND_START, SERVICE_NO_CHANGE, currentSysStr.c_str(), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+                            ::ChangeServiceConfigW(hService.Get(), SERVICE_NO_CHANGE, SERVICE_DEMAND_START, SERVICE_NO_CHANGE, currentSysStr.c_str(), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
                         }
                     }
                 }
-                ::CloseServiceHandle(hService);
             }
-            ::CloseServiceHandle(hSCM);
         }
 
         HANDLE handle = m_pfnOpen(filter.c_str(), WINDIVERT_LAYER_NETWORK, 0, 0);
@@ -458,23 +456,19 @@ namespace GoodByDpi_App::Services
             DWORD err = ::GetLastError();
             if (err == 1058)
             {
-                SC_HANDLE hSCMRetry = ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
+                Utils::ScopedServiceHandle hSCMRetry(::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_ALL_ACCESS));
                 if (!hSCMRetry)
                 {
-                    hSCMRetry = ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
+                    hSCMRetry.Reset(::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT));
                 }
                 if (hSCMRetry)
                 {
-                    SC_HANDLE hServiceRetry = ::OpenServiceW(hSCMRetry, L"WinDivert", SERVICE_CHANGE_CONFIG);
+                    Utils::ScopedServiceHandle hServiceRetry(::OpenServiceW(hSCMRetry.Get(), L"WinDivert", SERVICE_CHANGE_CONFIG));
                     if (hServiceRetry)
                     {
-                        wchar_t exeBuffer[MAX_PATH];
-                        ::GetModuleFileNameW(nullptr, exeBuffer, MAX_PATH);
-                        std::wstring currentSysStr = (std::filesystem::path(exeBuffer).parent_path() / L"WinDivert64.sys").wstring();
-                        ::ChangeServiceConfigW(hServiceRetry, SERVICE_NO_CHANGE, SERVICE_DEMAND_START, SERVICE_NO_CHANGE, currentSysStr.c_str(), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-                        ::CloseServiceHandle(hServiceRetry);
+                        std::wstring currentSysStr = (Utils::GetExecutableDirectory() / L"WinDivert64.sys").wstring();
+                        ::ChangeServiceConfigW(hServiceRetry.Get(), SERVICE_NO_CHANGE, SERVICE_DEMAND_START, SERVICE_NO_CHANGE, currentSysStr.c_str(), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
                     }
-                    ::CloseServiceHandle(hSCMRetry);
                 }
                 handle = m_pfnOpen(filter.c_str(), WINDIVERT_LAYER_NETWORK, 0, 0);
             }
